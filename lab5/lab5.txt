@@ -1,0 +1,163 @@
+// Sümeyye ACAR
+// ID: 22103640
+// CS223 Spring 2023
+// Lab5
+
+/////////////////////////////////////////////////////////////////////////////
+////////////////////////////    LAB 05    ///////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+
+// Clock Divider
+module ClockDiv( input logic clk, output logic slow );
+    
+    // Clock Counter
+    logic [28:0] counter;
+
+    always @(  posedge clk  )
+        begin  
+            if(  counter >= 49999999  )
+                begin
+                    counter <= 0;
+                    slow    <= 0;
+                end
+            else
+                begin
+                    counter <= counter + 1;
+                    slow    <=           1;
+                end
+        end
+
+endmodule
+
+/////////////////////////////////////////////////////////////////////////////
+
+// D Flip-Flop
+module d_ff( input logic clk, reset, cin,
+             output logic cout );
+    
+    always @(posedge clk)
+    begin
+        if (reset) begin
+            cout = 0;
+        end
+        else begin
+            cout <= cin;
+        end
+    end
+endmodule
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Shift Register
+module s_reg ( input logic clk, reset, par_load, shift, [7:0] in,
+               input logic added,
+               output logic [7:0] cout );
+
+    
+    always @(posedge clk)
+    begin
+        if (reset) begin
+            cout <= 8'b0;
+        end
+        
+        else if (shift) begin
+            cout <= cout >> 1;
+            cout[7] <= added;
+        end
+        
+        else if (par_load) begin
+            cout <= in;
+        end    
+    end
+    
+endmodule
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Full Adder
+module f_adder ( input logic a, b, cin,
+                output logic sum, cout );
+    
+    assign sum = a ^ b ^ cin;
+    assign cout = (a & b) | (a & cin) | (b & cin);
+    
+endmodule
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Serial Adder
+module s_adder( input logic clk, reset, parload, shift, [7:0] a, [7:0] b,
+                output logic [7:0] sum,
+                output logic outt );
+    
+    // Slowed Clock (for the fpga - change clk to slower in the next few lines)
+    //logic slower; 
+    //ClockDiv CD(.clk(clk), .slow(slower)); 
+    
+    logic [7:0] arr, arr2;
+    logic temp, temp2, cout, temp_sum, sgn;
+    
+    // Count is to making sure executes exatly 8 times
+    integer count = 0;
+    
+    // 3 shift Registers
+    s_reg sr1(clk, reset, parload, sgn, a, 1'b0, arr);
+    s_reg sr2(clk, reset, parload, sgn, b, 1'b0, arr2);
+    s_reg sr3(clk, reset, parload, sgn, 8'b0, temp_sum, sum);
+    
+    // 1 D-FlipFlop
+    d_ff dff(clk, reset, temp2, temp);
+    
+    // 1 Full Adder
+    f_adder fa(arr[0], arr2[0], temp, temp_sum, cout);
+    
+    assign sgn = ~outt & shift;
+    assign temp2 = sgn & cout | ~sgn & temp;
+    
+    always @( posedge clk )
+    begin
+        if (shift) begin
+            count = count + 1;
+        end
+        if (reset | parload) begin
+            outt = 0;
+            count = 0;
+        end
+        if (count == 8) begin
+            outt = 1;
+        end
+    end
+    
+endmodule
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Testbench
+module tb();
+
+    // Needed variables to initiate the serial adder
+    logic clk, reset, parload, shift;
+    logic [7:0] a, b, sum;
+    
+    // Device Under Test
+    s_adder dut(clk, reset, parload, shift, a, b, sum);
+    
+    always begin
+        clk = 1; #10;
+        clk = 0; #10;
+    end
+    
+    initial begin
+        reset   = 1; parload = 0; shift = 0; a = 8'b01001010; b = 8'b00110011;    #50 ;                      
+        reset   = 0; parload = 1;                                                 #30 ;
+        parload = 0;                                                              #50 ;
+        shift   = 1;                                                              #400;
+        shift   = 0; reset   = 1;                                                 #30 ;
+        reset   = 0; parload = 1;                                                 #30 ;
+        parload = 0; shift   = 1;                                                 #400;
+        reset   = 1; shift   = 0;                                                 #50 ;
+        $finish;
+    end
+
+endmodule
