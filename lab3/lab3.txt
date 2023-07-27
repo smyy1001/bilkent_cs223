@@ -1,0 +1,320 @@
+// Sumeyye Acar
+// ID: 22103640
+// CS223 Spring 2023
+// Lab3
+
+// 1-to-2 Decoder
+module decoder_1to2(input logic in, en, output logic [1:0] out);
+always_comb begin
+    if(en) begin
+        case(in)
+            1'b0: out = 2'b10;
+            1'b1: out = 2'b01;
+            default: out = 2'b00;
+        endcase
+    end
+    else begin
+        out = 2'b00;
+    end
+end
+endmodule
+
+
+
+// 1-to-2 Decoder Testbench
+module testbench();
+logic in, en;
+logic [1:0] out;
+decoder_1to2 u0(.in(in), .en(en), .out(out));
+initial begin
+     in = 0; en = 0;
+     #10
+     in = 1;
+     #10
+     in = 0; en = 1;
+     #10
+     in = 1;
+     #10
+     $finish;
+end
+endmodule
+
+ 
+-----------------------------------------------------------------------
+
+
+// 2-to-4 Decoder
+module decoder_2to4(input logic [1:0] in, 
+                  input logic en,
+                  output logic [3:0] out);
+wire [1:0] temp1;
+decoder_1to2 u0(.inn(in[1]), .en(en), .oout(temp1) );
+decoder_1to2 u1(.inn(in[0]), .en(temp1[0]), .oout(out[1:0]));
+decoder_1to2 u2(.inn(in[0]), .en(temp1[1]), .oout(out[3:2]));
+endmodule
+
+
+
+// 2-to-4 Decoder Testbench
+module testbench();
+logic en;
+logic [1:0] in;
+logic [3:0] out;
+decoder_2to4 u0(.in(in), .en(en), .out(out));
+initial begin
+     en = 0; in = 2'b00;
+     #10
+     in = 2'b01;
+     #10
+     in = 2'b10;
+     #10
+     in = 2'b11;
+     #10
+     en = 1; in = 2'b00;
+     #10
+     in = 2'b01;
+     #10
+     in = 2'b10;
+     #10
+     in = 2'b11;
+     #10
+     $finish;
+end
+endmodule
+
+
+// 2-to-4 Decoder Constraint 
+## Switches
+set_property -dict { PACKAGE_PIN R2   IOSTANDARD LVCMOS33 } [get_ports { en }];
+set_property -dict { PACKAGE_PIN T1   IOSTANDARD LVCMOS33 } [get_ports { in[1] }];
+set_property -dict { PACKAGE_PIN U1   IOSTANDARD LVCMOS33 } [get_ports { in[0] }];
+
+
+## LEDs
+set_property -dict { PACKAGE_PIN L1    IOSTANDARD LVCMOS33 } [get_ports { out[3] }];
+set_property -dict { PACKAGE_PIN P1    IOSTANDARD LVCMOS33 } [get_ports { out[2] }];
+set_property -dict { PACKAGE_PIN N3    IOSTANDARD LVCMOS33 } [get_ports { out[1] }];
+set_property -dict { PACKAGE_PIN P3    IOSTANDARD LVCMOS33 } [get_ports { out[0] }];
+
+
+-----------------------------------------------------------------------
+
+
+// 2x1 Multiplexer
+module multiplexer_2to1(input logic s, in, in2, output logic out);
+always_comb begin 
+    if(s == 1'b0) begin
+        out = in;
+    end
+    else begin
+        out = in2;
+    end
+end
+endmodule
+
+
+
+// 2x1 MUX Testbench
+module testbench();
+logic s, in, in2, out;
+multiplexer_2to1 u0(.s(s), .in(in), .in2(in2), .out(out));
+initial begin
+        s = 0; in = 0; in2 = 0;
+                            #10
+                       in2 = 1;
+                            #10
+               in = 1; in2 = 0;
+                            #10
+        s = 1; in = 0;
+                            #10
+        s = 1; in = 1; in2 = 1;
+                            #10
+                       in2 = 0;
+                            #10
+               in = 0; in2 = 1;
+                            #10
+        s = 0; in = 1;
+                            #10
+        $finish;
+    end
+endmodule
+
+
+-----------------------------------------------------------------------
+
+
+// 4x1 Multiplexer
+module multiplexer_4to1(input logic [1:0] s, input logic [3:0] in,
+                        output logic out);
+wire temp1, temp2;
+multiplexer_2to1 u0(.s(s[0]), .in(in[0]), .in2(in[1]), .out(temp1));
+multiplexer_2to1 u1(.s(s[0]), .in(in[2]), .in2(in[3]), .out(temp2));
+multiplexer_2to1 u2(.s(s[1]), .in(temp1), .in2(temp2), .out(out));
+endmodule
+
+
+// 4x1 MUX Testbench
+module testbench();
+logic [1:0] s;
+logic [3:0] in; 
+multiplexer_4to1 u0(.s(s),.in(in), .out(out));
+
+initial 
+    begin
+        s = 2'b00; in = 4'b0001;
+                             #10
+        s = 2'b01; in = 4'b0010;
+                             #10
+        s = 2'b10; in = 4'b0100;
+                             #10
+        s = 2'b11; in = 4'b1000;
+                             #10
+        $finish;
+    end
+endmodule
+
+
+-----------------------------------------------------------------------
+
+
+
+// 8x1 Multiplexer
+module multiplexer_8to1(input logic [2:0] s,
+                      input logic [7:0] in,
+                      output logic out);
+
+wire temp1, temp2;
+wire out1, out2;
+
+multiplexer_4to1 u0(.s(s[1:0]), .in(in[3:0]), .out(temp1));
+multiplexer_4to1 u1(.s(s[1:0]), .in(in[7:4]), .out(temp2));
+assign out1 = temp1 & ~s[2];
+assign out2 = temp2 & s[2];
+assign out = out1 | out2;
+endmodule
+
+
+// 8x1 MUX Testbench
+module testbench();
+
+logic [2:0] s;
+logic [7:0] in;
+logic out;
+multiplexer_8to1 u0(.s(s), .in(in), .out(out));
+
+initial 
+    begin
+        s = 3'b000; in = 8'bxxxxxxx1;
+                                  #10
+        s = 3'b001; in = 8'bxxxxxx1x;
+                                  #10
+        s = 3'b010; in = 8'bxxxxx1xx;
+                                  #10
+        s = 3'b011; in = 8'bxxxx1xxx;
+                                  #10
+        s = 3'b100; in = 8'bxxx1xxxx;
+                                  #10
+        s = 3'b101; in = 8'bxx1xxxxx;
+                                  #10
+        s = 3'b110; in = 8'bx1xxxxxx;
+                                  #10
+        s = 3'b111; in = 8'b1xxxxxxx;
+                                  #10
+        $finish;
+    end
+
+endmodule
+
+
+
+// constraint of 8x1 multiplexer
+## Switches
+set_property -dict { PACKAGE_PIN R2    IOSTANDARD LVCMOS33 } [get_ports  s[2]  ];
+set_property -dict { PACKAGE_PIN T1    IOSTANDARD LVCMOS33 } [get_ports  s[1]  ];
+set_property -dict { PACKAGE_PIN U1    IOSTANDARD LVCMOS33 } [get_ports  s[0]  ];
+set_property -dict { PACKAGE_PIN W2    IOSTANDARD LVCMOS33 } [get_ports  in[7] ];
+set_property -dict { PACKAGE_PIN R3    IOSTANDARD LVCMOS33 } [get_ports  in[6] ];
+set_property -dict { PACKAGE_PIN T2    IOSTANDARD LVCMOS33 } [get_ports  in[5] ];
+set_property -dict { PACKAGE_PIN T3    IOSTANDARD LVCMOS33 } [get_ports  in[4] ];
+set_property -dict { PACKAGE_PIN V2    IOSTANDARD LVCMOS33 } [get_ports  in[3] ];
+set_property -dict { PACKAGE_PIN W13   IOSTANDARD LVCMOS33 } [get_ports  in[2] ];
+set_property -dict { PACKAGE_PIN W14   IOSTANDARD LVCMOS33 } [get_ports  in[1] ];
+set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports  in[0] ];
+
+## LEDs
+set_property -dict { PACKAGE_PIN L1    IOSTANDARD LVCMOS33 } [get_ports  out ];  
+
+
+-----------------------------------------------------------------------
+
+
+// Method -> F(A,B,C,D)=∑(0,2,5,6,8,10,12,13,15) 
+module method(input logic a, b, c, d, output logic out);
+wire [3:0] temp_out;
+wire [7:0] temp_in;
+assign temp_in[0] = ~d;
+assign temp_in[1] = (~c&~d) + d;
+assign temp_in[2] = ~d;
+assign temp_in[3] = 1'b0;
+assign temp_in[4] = c^d;
+assign temp_in[5] = 1'b0;
+assign temp_in[6] = 1'b0;
+assign temp_in[7] = 1'b0;
+
+decoder_with_enable_2to4 u0(.in({a,b}), .en(1'b1), .out(temp_out));
+multiplexer_8to1 u1(.s(temp_out[2:0]),.in(temp_in), .out(out));
+endmodule
+
+
+// Method Testbench
+module testbench();
+logic a, b, c, d, out;
+method u0(.a(a), .b(b), .c(c), .d(d), .out(out));
+initial begin
+        a = 0; b = 0; c = 0; d = 0; 
+                                #10
+                             d = 1;
+                                #10
+                      c = 1; d = 0;
+                                #10
+                             d = 1;
+                                #10
+               b = 1; c = 0; d = 0;
+                                #10
+                             d = 1;
+                                #10
+                      c = 1; d = 0;
+                                #10
+                             d = 1;
+                                #10
+        a = 1; b = 0; c = 0; d = 0;
+                                #10
+                             d = 1;
+                                #10
+                      c = 1; d = 0;
+                                #10
+                             d = 1;
+                                #10
+               b = 1; c = 0; d = 0;
+                                #10
+                             d = 1;
+                                #10
+                      c = 1; d = 0;
+                                #10
+                             d = 1;
+                                #10
+        $finish;
+    end
+endmodule
+
+
+
+// Method Constraint 
+## Switches
+set_property -dict { PACKAGE_PIN R2    IOSTANDARD LVCMOS33 } [get_ports  a ];
+set_property -dict { PACKAGE_PIN T1    IOSTANDARD LVCMOS33 } [get_ports  b ];
+set_property -dict { PACKAGE_PIN U1    IOSTANDARD LVCMOS33 } [get_ports  c ];
+set_property -dict { PACKAGE_PIN W2    IOSTANDARD LVCMOS33 } [get_ports  d ];
+
+## LEDs
+set_property -dict { PACKAGE_PIN L1    IOSTANDARD LVCMOS33 } [get_ports  out ]; 
