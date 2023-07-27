@@ -1,0 +1,153 @@
+// Sumeyye Acar
+// ID: 22103640
+// CS223 Spring 2023
+// Lab1 & Lab2
+
+// half adder
+module my_half_adder(input logic a,b, output logic sum, cout);
+assign sum = a ^ b;
+assign cout = a & b;
+endmodule
+
+
+// testbench of the half adder 
+module my_half_adder_testbench();
+logic a, b;
+logic sum, cout;
+    
+my_half_adder ha(a,b,sum,cout);
+    
+    initial begin
+        a = 0; b = 0; #10;
+        b = 1; #10;
+        a = 1; b = 0; #10;
+        b = 1; #10;
+        $finish;
+    end
+endmodule
+
+
+
+
+// half subtractor 
+module my_half_subtractor(input logic a, b, output logic diff, bout);
+assign diff = a ^ b;
+assign bout = ~a & b;
+endmodule
+
+
+
+
+// testbench of the half subtractor
+module my_half_subtractor_testbench();
+logic a, b;
+logic diff, bout;
+    
+my_half_subtractor hs(a,b,diff,bout);
+    
+    initial begin
+        a = 0; b = 0; #10;
+        b = 1; #10;
+        a = 1; b = 0; #10;
+        b = 1; #10;
+        $finish;
+    end
+endmodule
+
+
+
+
+//full adder
+module my_full_adder(input logic a, b, cin, output logic sum, cout);
+wire tempSum, tempCout1, tempCout2;
+my_half_adder ha1(a,b,tempSum,tempCout1);
+my_half_adder ha2(tempSum, cin, sum, tempCout2);
+assign cout = tempCout1 | tempCout2;
+endmodule
+
+
+
+
+// testbench of the full adder
+module my_full_adder_testbench();
+logic a, b, cin;
+logic sum, cout;
+    
+my_full_adder fa(a,b,cin,sum,cout);
+    
+    initial begin
+        a = 0; b = 0; cin = 0; #10;
+        cin = 1; #10;
+        b = 1; cin = 0; #10;
+        cin = 1; #10;
+        a = 1; b = 0; cin = 0; #10;
+        cin = 1; #10;
+        b = 1; cin = 0; #10;
+        cin = 1; #10;
+        $finish;
+    end
+    
+endmodule
+
+
+
+
+// full subtractor
+module my_full_subtractor(input logic a, b, bin, output logic diff, bout);
+wire tempDiff, tempBout1, tempBout2;
+    
+my_half_subtractor hs1(a,b,tempDiff,tempBout1);
+my_half_subtractor hs2(tempDiff, bin, diff, tempBout2);
+    
+assign bout = tempBout1| tempBout2;
+endmodule
+
+
+
+
+// testbench of the full subtractor 
+module my_full_subtractor_testbench();
+logic a, b, bin;
+logic diff, bout;
+    
+my_full_subtractor fs(a,b,bin,diff,bout);
+    
+    initial begin
+        a = 0; b = 0; bin = 0; #10;
+        bin = 1; #10;
+        b = 1; bin = 0; #10;
+        bin = 1; #10;
+        a = 1; b = 0; bin = 0; #10;
+        bin = 1; #10;
+        b = 1; bin = 0; #10;
+        bin = 1; #10;
+        $finish;
+    end
+    
+endmodule
+
+
+
+//constrait file's relevent part for full adder
+## Switches
+set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { a }];
+set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { b }];
+set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports { cin }];
+
+## LEDs
+set_property -dict { PACKAGE_PIN U16    IOSTANDARD LVCMOS33 } [get_ports { sum }]; 
+set_property -dict { PACKAGE_PIN E19    IOSTANDARD LVCMOS33 } [get_ports { cout }];
+
+
+
+
+
+// constrait file's relevent part for full subtractor
+## Switches
+set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports { a }];
+set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports { b }];
+set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports { bin }];
+
+## LEDs
+set_property -dict { PACKAGE_PIN U16    IOSTANDARD LVCMOS33 } [get_ports { diff }]; 
+set_property -dict { PACKAGE_PIN E19    IOSTANDARD LVCMOS33 } [get_ports { bout }];
