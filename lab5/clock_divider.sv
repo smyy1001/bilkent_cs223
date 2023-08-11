@@ -1,7 +1,7 @@
 // Clock Divider
 module ClockDiv( input logic clk, output logic slow );
     
-    // Clock Counter
+    // Clock Counterr
     logic [28:0] counter;
 
     always @(  posedge clk  )
